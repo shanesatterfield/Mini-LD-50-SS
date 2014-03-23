@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Mini Ludum Dare 50</title>
+	<script src='http://cdn.html5quintus.com/v0.2.0/quintus-all.js'></script>
+</head>
+<body>
+	<script type="text/javascript">
+		var Q = Quintus({
+			imagePath: "assets/",
+			audioPath: "assets/",
+			dataPath: "assets/",
+		});
+		
+		Q.include("Sprites, Anim, Scenes, Input, 2D, Touch, UI, TMX")
+				.setup({ maximize: true, width: 1024, height: 768 })
+				.touch( Q.SPRITE_ALL );
+
+		Q.input.touchControls();
+		Q.input.keyboardControls();
+		Q.input.mouseControls({ cursor: 'on' });
+
+
+		Q.Sprite.extend("Player", {
+			init: function(p) {
+				this._super(p, {
+					asset: "beardy.png",
+					x: 100,
+					y: 0,
+					type: Q.SPRITE_PLAYER,
+					collisionMask: Q.SPRITE_DEFAULT | Q.SPRITE_ENEMY | Q.SPRITE_PLAYER,
+
+					blocksLeft: 15
+				});
+
+				this.add('2d, platformerControls');
+
+				this.on("hit.sprite", function( collision ){
+					if( collision.obj.isA("Enemy") )
+					{
+						Q.stageScene("EndGame", 1, { label: 'You Died' });
+						this.destroy();
+					}
+				});
+			},
+
+			step: function() {
+				if( this.p.x < 0 || this.p.x > 10000 || this.p.y < 0 || this.p.y > 10000 )
+				{
+					Q.stageScene("EndGame", 1, { label: 'You fell to your death.' });
+					this.destroy();
+				}
+			}
+		});
+
+		Q.Sprite.extend("Enemy", {
+			init: function(p) {
+				this._super(p, {
+					asset: "generic_enemy.png",
+					vx: 100,
+					type: Q.SPRITE_ENEMY,
+					collisionMask: Q.SPRITE_ENEMY | Q.SPRITE_DEFAULT | Q.SPRITE_PLAYER
+				});
+
+				this.add('2d, aiBounce');
+
+				this.on('drag', function(touch){
+					this.p.x = touch.origX + touch.dx;
+					this.p.y = touch.origY + touch.dy;
+				});
+			}
+		})
+
+		Q.Sprite.extend("Bullet", {
+			init: function(p){
+				this._super(p, {
+					asset: 'bullet.png',
+				});
+
+				this.add('2d');
+				/*
+				this.on('hit.sprite', function( collision ){
+					if( !collision.obj.isA('Player') )
+					{
+						this.p.vx = 0;
+						collision.obj.destroy();
+						this.destroy();
+					}
+				});
+				*/
+			}
+		});
+
+		Q.el.addEventListener('mousedown', function(){
+			var player = Q('Player').first();
+
+			if( player.p.blocksLeft > 0 )
+			{
+				var bullet = {};
+				bullet.x = Q.inputs['mouseX'] - player.p.x;
+				bullet.y = Q.inputs['mouseY'] - player.p.y;
+				bullet.magnitude = Math.sqrt( bullet.x*bullet.x + bullet.y*bullet.y );
+				bullet.x /= bullet.magnitude;
+				bullet.y /= bullet.magnitude;
+
+				console.log( bullet.x );
+				console.log( bullet.y );
+				var defaultVel = 500;
+
+				//player.stage.insert( new Q.Bullet({ x: player.p.x + 100*bullet.x, y: player.p.y + 100*bullet.y, vx: bullet.x*defaultVel, vy: bullet.y*defaultVel }) );
+
+				bullet.x = Math.floor(Q.inputs['mouseX'] / 32) * 32 + 16;
+				bullet.y = Math.floor(Q.inputs['mouseY'] / 32) * 32 + 16;
+				player.stage.insert( new Q.Bullet({ x: bullet.x, y: bullet.y }) );
+				
+				--player.p.blocksLeft;
+				Q.stageScene('hud', 3, player.p);
+			}
+
+		});
+
+		Q.scene("level-1", function( stage ) {
+			//var player = new Q.Player();
+			Q.stageTMX("level-1.tmx", stage);
+			stage.add('viewport').follow(Q("Player").first());
+
+
+		});
+
+		Q.scene('hud', function( stage ){
+			var blocksLeft = ( "00" + stage.options.blocksLeft.toString() ).substring( -2 );
+			console.log( blocksLeft );
+			var container = stage.insert( new Q.UI.Container({
+				fill: 'gray',
+				border: 5,
+				shadow: 10,
+				shadowColor: "rgba(0,0,0,0.5)",
+				x: 120,
+				y: 50
+			}) );
+			var blocksLeft = container.insert( new Q.UI.Text({
+				label: "Blocks Left: " + blocksLeft
+			}) );
+
+			container.insert( blocksLeft );
+			container.fit( 20, 20 );
+		});
+
+		Q.scene('EndGame', function( stage ){
+			var container = stage.insert( new Q.UI.Container({
+				x: Q.width / 2,
+				y: Q.height / 2,
+				fill: "rgba(240,240,240,1)"
+			}));
+
+			var button = container.insert( new Q.UI.Button({
+				x: 0,
+				y: 0,
+				fill: '#CCCCCC',
+				label: "Play"
+			}));
+
+			var label = container.insert( new Q.UI.Text({
+				x: 10,
+				y: -10 - button.p.h,
+				label: stage.options.label
+			}));
+
+			button.on("click", function(){
+				Q.clearStages();
+				Q.stageScene('level-1');
+				Q.stageScene('hud', 3, Q('Player').first().p);
+			})
+
+			container.fit( 20 );
+		})
+
+		Q.loadTMX(["level-1.tmx", "Tiles_32x32.png", "generic_enemy.png", 'bullet.png', 'beardy.png'], function() {
+			Q.stageScene('EndGame', 1, { label: 'Would you like to play a game?' });
+		});
+	</script>
+</body>
+</html>
