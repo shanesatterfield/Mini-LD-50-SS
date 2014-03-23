@@ -1,0 +1,10 @@
+{
+	"player": {
+		"sx": 2,
+		"sy": 9,
+		"tilew": 52,
+		"tileh": 80,
+		"spacingX": 8,
+		"spacingY": 10
+	}
+}
