@@ -97,8 +97,7 @@
 						this.p.currState = 'idle';
 					this.play( this.p.currState );
 				}
-
-				if( this.p.y > 5000 )
+				if( this.p.y > 3000 )
 				{
 					Q.stageScene("EndGame", 1, { label: 'You fell to your death.' });
 					this.destroy();
@@ -278,7 +277,7 @@
 			container.fit( 20 );
 		})
 
-		Q.loadTMX(["level-1.tmx", "Tiles_32x32.png", "generic_enemy.png", 'bullet.png', 'wizard_1.png', 'placeholder_player.json', 'fireball_0.png'], function() {
+		Q.loadTMX(["level-1.tmx", "Tiles_64x64.png", "generic_enemy.png", 'bullet.png', 'wizard_1.png', 'placeholder_player.json', 'fireball_0.png'], function() {
 			Q.compileSheets('wizard_1.png', 'placeholder_player.json');
 
 			Q.sheet('fireball', 'fireball_0.png', {
@@ -291,8 +290,8 @@
 			});
 
 			Q.animations('fireball', {
-				fireball_right: { frames: [0,1,2,3,4,5,6], rate: 1/15, loop: false, flip: false },
-				fireball_left:  { frames: [0,1,2,3,4,5,6], rate: 1/15, loop: false, flip: 'x' }
+				fireball_right: { frames: [0,1,2,3,4,5,6], rate: 1/15, loop: true, flip: false },
+				fireball_left:  { frames: [0,1,2,3,4,5,6], rate: 1/15, loop: true, flip: 'x' }
 			})
 			Q.stageScene('EndGame', 1, { label: 'Would you like to play a game?' });
 		});
